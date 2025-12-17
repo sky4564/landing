@@ -84,7 +84,7 @@ export default function LoginPage() {
               },
             },
           }}
-          redirectTo="/dashboard"
+          redirectTo="/onboarding"
           showLinks={true}
           view="sign_in"
         />

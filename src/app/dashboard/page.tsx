@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { BalanceCard } from "@/components/BalanceCard";
 import { LogoutButton } from "@/components/LogoutButton";
+import { UserProfile } from "@/components/UserProfile";
 
 /**
  * 사용자 대시보드 페이지 컴포넌트입니다.
@@ -23,15 +24,16 @@ import { LogoutButton } from "@/components/LogoutButton";
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (error || !user) {
     redirect("/login");
   }
 
   /** 현재 로그인한 사용자의 이메일 주소 (없을 경우 "사용자"로 표시) */
-  const userEmail = session.user.email ?? "사용자";
+  const userEmail = user.email ?? "사용자";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-6 py-12 text-slate-50">
@@ -54,18 +56,21 @@ export default async function DashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <BalanceCard />
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-indigo-900/30 backdrop-blur">
-            <p className="text-sm font-semibold text-cyan-100">
-              다음 단계 · 은행 연결
-            </p>
-            <ul className="mt-3 space-y-2 text-sm text-slate-200">
-              <li>· 오픈뱅킹 인증 후 Access Token 저장</li>
-              <li>· 토큰 만료 시 Refresh 로직 추가</li>
-              <li>· `/api/balance`에서 실제 잔액 조회로 교체</li>
-            </ul>
-            <p className="mt-3 text-xs text-slate-400">
-              실계좌 연동 전까지는 환경변수 기반의 모의 잔액이 표시됩니다.
-            </p>
+          <div className="space-y-6">
+            <UserProfile />
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-indigo-900/30 backdrop-blur">
+              <p className="text-sm font-semibold text-cyan-100">
+                다음 단계 · 은행 연결
+              </p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-200">
+                <li>· 오픈뱅킹 인증 후 Access Token 저장</li>
+                <li>· 토큰 만료 시 Refresh 로직 추가</li>
+                <li>· `/api/balance`에서 실제 잔액 조회로 교체</li>
+              </ul>
+              <p className="mt-3 text-xs text-slate-400">
+                실계좌 연동 전까지는 환경변수 기반의 모의 잔액이 표시됩니다.
+              </p>
+            </div>
           </div>
         </div>
       </div>

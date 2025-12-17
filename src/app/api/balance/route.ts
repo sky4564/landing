@@ -36,11 +36,11 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
 export async function GET() {
   const supabase = await createServerSupabaseClient();
   const {
-    data: { session },
+    data: { user },
     error,
-  } = await supabase.auth.getSession();
+  } = await supabase.auth.getUser();
 
-  if (error || !session) {
+  if (error || !user) {
     return NextResponse.json(
       { error: "인증이 필요합니다." },
       { status: 401 },
@@ -48,7 +48,7 @@ export async function GET() {
   }
 
   /** 현재 로그인한 사용자의 고유 ID */
-  const userId = session.user.id;
+  const userId = user.id;
 
   // 현재는 환경변수 기반 MOCK. 실제로는 userId에 매핑된 은행 연결 정보를 조회 후
   // 오픈뱅킹/은행 API를 호출해 잔액을 가져옵니다.
