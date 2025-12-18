@@ -58,7 +58,6 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase) return;
     setLoading(true);
     setError(null);
 
