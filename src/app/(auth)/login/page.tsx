@@ -4,7 +4,7 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { createClient } from "@/lib/supabaseClient";
 import Link from "next/link";
-import { useMemo, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /**
@@ -23,14 +23,30 @@ import { useRouter } from "next/navigation";
  */
 export default function LoginPage() {
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   // 클라이언트에서만 실행되도록 lazy initialization
-  const supabase = useMemo(() => {
+  const [supabase] = useState<ReturnType<typeof createClient> | null>(() => {
     if (typeof window === 'undefined') {
-      // 서버 사이드에서는 null 반환 (실제로는 사용되지 않음)
       return null;
     }
-    return createClient();
-  }, []) as ReturnType<typeof createClient> | null;
+    try {
+      return createClient();
+    } catch (err) {
+      // 에러는 useEffect에서 처리
+      return null;
+    }
+  });
+
+  // 클라이언트 초기화 에러 확인
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !supabase) {
+      try {
+        createClient();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Supabase 클라이언트 초기화 실패");
+      }
+    }
+  }, [supabase]);
 
   /** 이미 로그인된 사용자인지 확인하고 대시보드로 리다이렉트 */
   useEffect(() => {
@@ -58,7 +74,15 @@ export default function LoginPage() {
             이메일로 로그인하거나 새 계정을 만드세요.
           </p>
         </div>
-        {supabase && (
+        {error && (
+          <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-200">
+            {error}
+            <p className="mt-2 text-xs text-red-300">
+              환경 변수가 제대로 설정되지 않았습니다. 관리자에게 문의하세요.
+            </p>
+          </div>
+        )}
+        {supabase && !error && (
           <Auth
             supabaseClient={supabase}
             appearance={{
