@@ -4,7 +4,7 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { createClient } from "@/lib/supabaseClient";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 /**
@@ -23,34 +23,10 @@ import { useRouter } from "next/navigation";
  */
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  // 클라이언트에서만 실행되도록 lazy initialization
-  const [supabase] = useState<ReturnType<typeof createClient> | null>(() => {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    try {
-      return createClient();
-    } catch (err) {
-      // 에러는 useEffect에서 처리
-      return null;
-    }
-  });
-
-  // 클라이언트 초기화 에러 확인
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !supabase) {
-      try {
-        createClient();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Supabase 클라이언트 초기화 실패");
-      }
-    }
-  }, [supabase]);
+  const supabase = useMemo(() => createClient(), []);
 
   /** 이미 로그인된 사용자인지 확인하고 대시보드로 리다이렉트 */
   useEffect(() => {
-    if (!supabase) return;
     const checkSession = async () => {
       const {
         data: { session },
@@ -74,54 +50,44 @@ export default function LoginPage() {
             이메일로 로그인하거나 새 계정을 만드세요.
           </p>
         </div>
-        {error && (
-          <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-200">
-            {error}
-            <p className="mt-2 text-xs text-red-300">
-              환경 변수가 제대로 설정되지 않았습니다. 관리자에게 문의하세요.
-            </p>
-          </div>
-        )}
-        {supabase && !error && (
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: "#8b5cf6",
-                    brandAccent: "#22d3ee",
-                    inputBackground: "#0f172a",
-                    inputText: "#e2e8f0",
-                  },
+        <Auth
+          supabaseClient={supabase}
+          appearance={{
+            theme: ThemeSupa,
+            variables: {
+              default: {
+                colors: {
+                  brand: "#8b5cf6",
+                  brandAccent: "#22d3ee",
+                  inputBackground: "#0f172a",
+                  inputText: "#e2e8f0",
                 },
               },
-            }}
-            providers={[]}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: "이메일",
-                  password_label: "비밀번호",
-                  button_label: "로그인",
-                  loading_button_label: "로그인 중...",
-                  email_input_placeholder: "your@email.com",
-                },
-                sign_up: {
-                  email_label: "이메일",
-                  password_label: "비밀번호",
-                  button_label: "회원가입",
-                  loading_button_label: "가입 중...",
-                  email_input_placeholder: "your@email.com",
-                },
+            },
+          }}
+          providers={[]}
+          localization={{
+            variables: {
+              sign_in: {
+                email_label: "이메일",
+                password_label: "비밀번호",
+                button_label: "로그인",
+                loading_button_label: "로그인 중...",
+                email_input_placeholder: "your@email.com",
               },
-            }}
-            redirectTo="/onboarding"
-            showLinks={true}
-            view="sign_in"
-          />
-        )}
+              sign_up: {
+                email_label: "이메일",
+                password_label: "비밀번호",
+                button_label: "회원가입",
+                loading_button_label: "가입 중...",
+                email_input_placeholder: "your@email.com",
+              },
+            },
+          }}
+          redirectTo="/onboarding"
+          showLinks={true}
+          view="sign_in"
+        />
         <p className="text-center text-xs text-slate-400">
           돌아가기{" "}
           <Link href="/" className="text-purple-200 hover:text-purple-100">
@@ -132,5 +98,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-
