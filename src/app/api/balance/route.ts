@@ -11,9 +11,11 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
 /**
  * 사용자의 계좌 잔액 및 재무 정보를 조회하는 API 엔드포인트입니다.
  * 
- * 현재는 환경 변수 기반의 모의(Mock) 데이터를 반환합니다.
- * 실제 서비스에서는 Supabase에 저장된 사용자의 은행 연결 정보를 조회한 후,
- * 오픈뱅킹 API를 호출하여 실제 잔액을 가져옵니다.
+ * Supabase의 budgets 테이블에서 실제 데이터를 조회합니다.
+ * 데이터가 없으면 기본값(0)으로 빈 레코드를 자동 생성합니다.
+ * 
+ * 향후 오픈뱅킹 API 연동 시, 이 엔드포인트에서 은행 연결 정보를 조회한 후
+ * 오픈뱅킹 API를 호출하여 실제 잔액을 업데이트할 수 있습니다.
  * 
  * @returns {Promise<NextResponse>} JSON 형태의 재무 정보
  * @returns {Promise<NextResponse>} 인증 실패 시 401 에러 응답
@@ -34,52 +36,129 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
  * ```
  */
 export async function GET() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (error || !user) {
+    if (authError || !user) {
+      console.error("인증 오류:", authError);
+      return NextResponse.json(
+        { error: "인증이 필요합니다.", details: authError?.message },
+        { status: 401 },
+      );
+    }
+
+    /** 현재 로그인한 사용자의 고유 ID */
+    const userId = user.id;
+
+    // budgets 테이블에서 사용자 예산 정보 조회
+    const { data: budget, error: budgetError } = await supabase
+      .from("budgets")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    // PGRST116은 "no rows returned" 에러 (예산 데이터가 없는 경우)
+    if (budgetError) {
+      if (budgetError.code === "PGRST116") {
+        // 예산 데이터가 없으면 기본값으로 빈 레코드 자동 생성
+        const { data: newBudget, error: createError } = await supabase
+          .from("budgets")
+          .insert({
+            id: userId,
+            balance: 0,
+            income: 0,
+            expense: 0,
+            shared_expense: 0,
+            expected_remain: 0,
+            currency: "KRW",
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error("예산 자동 생성 오류:", {
+            code: createError.code,
+            message: createError.message,
+            details: createError.details,
+            hint: createError.hint,
+          });
+
+          // 생성 실패 시 기본값 반환
+          return NextResponse.json({
+            userId,
+            balance: 0,
+            income: 0,
+            expense: 0,
+            sharedExpense: 0,
+            expectedRemain: 0,
+            currency: "KRW",
+            updatedAt: new Date().toISOString(),
+          });
+        }
+
+        // 새로 생성된 예산 데이터 반환
+        return NextResponse.json({
+          userId,
+          balance: Number(newBudget.balance),
+          income: Number(newBudget.income),
+          expense: Number(newBudget.expense),
+          sharedExpense: Number(newBudget.shared_expense),
+          expectedRemain: Number(newBudget.expected_remain),
+          currency: newBudget.currency || "KRW",
+          updatedAt: newBudget.updated_at || new Date().toISOString(),
+        });
+      }
+
+      // 다른 에러인 경우 (테이블이 없거나, RLS 정책 문제 등)
+      console.error("예산 조회 오류:", {
+        code: budgetError.code,
+        message: budgetError.message,
+        details: budgetError.details,
+        hint: budgetError.hint,
+      });
+
+      let errorMessage = "예산 정보를 불러오는데 실패했습니다.";
+      if (budgetError.code === "42P01") {
+        errorMessage = "budgets 테이블이 존재하지 않습니다. Supabase Dashboard에서 테이블을 생성해주세요.";
+      } else if (budgetError.code === "42501") {
+        errorMessage = "예산 정보에 접근할 수 있는 권한이 없습니다. RLS 정책을 확인해주세요.";
+      }
+
+      return NextResponse.json(
+        {
+          error: errorMessage,
+          details: budgetError.message,
+          code: budgetError.code,
+        },
+        { status: 500 },
+      );
+    }
+
+    // 조회 성공 시 실제 DB 데이터 반환
+    return NextResponse.json({
+      userId,
+      balance: Number(budget.balance),
+      income: Number(budget.income),
+      expense: Number(budget.expense),
+      sharedExpense: Number(budget.shared_expense),
+      expectedRemain: Number(budget.expected_remain),
+      currency: budget.currency || "KRW",
+      updatedAt: budget.updated_at || new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("예상치 못한 오류:", error);
     return NextResponse.json(
-      { error: "인증이 필요합니다." },
-      { status: 401 },
+      {
+        error: "서버 오류가 발생했습니다.",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
     );
   }
-
-  /** 현재 로그인한 사용자의 고유 ID */
-  const userId = user.id;
-
-  // 현재는 환경변수 기반 MOCK. 실제로는 userId에 매핑된 은행 연결 정보를 조회 후
-  // 오픈뱅킹/은행 API를 호출해 잔액을 가져옵니다.
-
-  /** 현재 계좌 잔액 (환경 변수에서 읽어오며, 기본값: 1,800,000원) */
-  const balance = Number(process.env.MOCK_BALANCE ?? 1_800_000);
-
-  /** 월 수입 (환경 변수에서 읽어오며, 기본값: 3,200,000원) */
-  const income = Number(process.env.MOCK_INCOME ?? 3_200_000);
-
-  /** 월 지출 (환경 변수에서 읽어오며, 기본값: 1,800,000원) */
-  const expense = Number(process.env.MOCK_EXPENSE ?? 1_800_000);
-
-  /** 공동 지출 금액 (환경 변수에서 읽어오며, 기본값: 720,000원) */
-  const sharedExpense = Number(process.env.MOCK_SHARED_EXPENSE ?? 720_000);
-
-  /** 예상 잔액 (환경 변수에서 읽어오며, 기본값: 1,400,000원) */
-  const expectedRemain = Number(
-    process.env.MOCK_EXPECTED_REMAIN ?? 1_400_000,
-  );
-
-  return NextResponse.json({
-    userId,
-    balance,
-    income,
-    expense,
-    sharedExpense,
-    expectedRemain,
-    currency: "KRW",
-    updatedAt: new Date().toISOString(),
-  });
 }
 
 

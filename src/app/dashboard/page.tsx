@@ -47,8 +47,7 @@ export default async function DashboardPage() {
               {userEmail} 님의 가계 현황
             </h1>
             <p className="text-slate-300">
-              연결된 계좌의 잔액과 최근 지출을 한 곳에서 확인하세요. (지금은
-              샘플 데이터로 표시됩니다)
+              연결된 계좌의 잔액과 최근 지출을 한 곳에서 확인하세요.
             </p>
           </div>
           <LogoutButton />
@@ -65,10 +64,10 @@ export default async function DashboardPage() {
               <ul className="mt-3 space-y-2 text-sm text-slate-200">
                 <li>· 오픈뱅킹 인증 후 Access Token 저장</li>
                 <li>· 토큰 만료 시 Refresh 로직 추가</li>
-                <li>· `/api/balance`에서 실제 잔액 조회로 교체</li>
+                <li>· 오픈뱅킹 API 연동하여 budgets 테이블 자동 업데이트</li>
               </ul>
               <p className="mt-3 text-xs text-slate-400">
-                실계좌 연동 전까지는 환경변수 기반의 모의 잔액이 표시됩니다.
+                현재는 budgets 테이블의 데이터를 표시합니다. 오픈뱅킹 연동 후 자동으로 업데이트됩니다.
               </p>
             </div>
           </div>
