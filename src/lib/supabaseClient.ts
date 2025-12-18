@@ -9,8 +9,7 @@ import { createBrowserClient } from "@supabase/ssr";
  * @returns {ReturnType<typeof createBrowserClient>} Supabase 브라우저 클라이언트 인스턴스
  * @throws {Error} 환경 변수가 설정되지 않은 경우 에러를 던집니다.
  * 
- 
-* @example
+ * @example
  * ```tsx
  * 'use client';
  * import { createClient } from '@/lib/supabaseClient';
@@ -29,5 +28,3 @@ export function createClient() {
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
-
-
