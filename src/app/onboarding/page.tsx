@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabaseClient";
 import Link from "next/link";
@@ -15,7 +15,14 @@ import Link from "next/link";
  */
 export default function OnboardingPage() {
   const router = useRouter();
-  const supabase = createClient();
+  // 클라이언트에서만 실행되도록 lazy initialization
+  const supabase = useMemo(() => {
+    if (typeof window === 'undefined') {
+      // 서버 사이드에서는 null 반환 (실제로는 사용되지 않음)
+      return null;
+    }
+    return createClient();
+  }, []) as ReturnType<typeof createClient> | null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
@@ -27,6 +34,7 @@ export default function OnboardingPage() {
 
   /** 로그인 상태 확인 및 기존 프로필 확인 */
   useEffect(() => {
+    if (!supabase) return;
     const checkAuth = async () => {
       const {
         data: { session },
@@ -58,6 +66,7 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) return;
     setLoading(true);
     setError(null);
 

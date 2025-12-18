@@ -4,6 +4,9 @@ import { BalanceCard } from "@/components/BalanceCard";
 import { LogoutButton } from "@/components/LogoutButton";
 import { UserProfile } from "@/components/UserProfile";
 
+// 동적 렌더링 강제 (서버 사이드 prerender 방지)
+export const dynamic = 'force-dynamic';
+
 /**
  * 사용자 대시보드 페이지 컴포넌트입니다.
  * 
