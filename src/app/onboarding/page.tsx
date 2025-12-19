@@ -78,6 +78,7 @@ export default function OnboardingPage() {
           name: formData.name,
           age: formData.age ? parseInt(formData.age) : null,
           location: formData.location || null,
+          email: session.user.email || null, // 이메일 주소 저장 (관리 목적)
         });
 
       if (insertError) {
