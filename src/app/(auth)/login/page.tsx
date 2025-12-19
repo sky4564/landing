@@ -88,12 +88,20 @@ export default function LoginPage() {
           showLinks={true}
           view="sign_in"
         />
-        <p className="text-center text-xs text-slate-400">
-          돌아가기{" "}
-          <Link href="/" className="text-purple-200 hover:text-purple-100">
-            홈으로
+        <div className="space-y-2 text-center">
+          <Link
+            href="/forgot-password"
+            className="text-xs text-purple-200 hover:text-purple-100 transition"
+          >
+            비밀번호를 잊으셨나요?
           </Link>
-        </p>
+          <p className="text-xs text-slate-400">
+            돌아가기{" "}
+            <Link href="/" className="text-purple-200 hover:text-purple-100">
+              홈으로
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

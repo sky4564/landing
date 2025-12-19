@@ -31,7 +31,7 @@ export async function GET() {
     // PGRST116은 "no rows returned" 에러 (프로필이 없는 경우)
     if (profileError) {
       if (profileError.code === "PGRST116") {
-        // 프로필이 없으면 빈 프로필 자동 생성
+        // 프로필이 없으면 빈 프로필 자동 생성 (이메일 포함)
         const { data: newProfile, error: createError } = await supabase
           .from("profiles")
           .insert({
@@ -39,6 +39,7 @@ export async function GET() {
             name: null,
             age: null,
             location: null,
+            email: user.email || null, // 이메일 주소 저장 (관리 목적)
           })
           .select()
           .single();
@@ -139,14 +140,26 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { name, age, location } = body;
 
+    // 업데이트할 데이터 준비 (undefined인 필드는 제외)
+    // 이메일은 auth.users에서 가져와서 자동으로 동기화
+    const updateData: {
+      id: string;
+      name?: string | null;
+      age?: number | null;
+      location?: string | null;
+      email?: string | null;
+    } = {
+      id: user.id,
+      email: user.email || null, // 이메일은 항상 auth.users와 동기화
+    };
+
+    if (name !== undefined) updateData.name = name || null;
+    if (age !== undefined) updateData.age = age ? parseInt(age) : null;
+    if (location !== undefined) updateData.location = location || null;
+
     const { data: profile, error: updateError } = await supabase
       .from("profiles")
-      .upsert({
-        id: user.id,
-        name: name || null,
-        age: age ? parseInt(age) : null,
-        location: location || null,
-      })
+      .upsert(updateData)
       .select()
       .single();
 

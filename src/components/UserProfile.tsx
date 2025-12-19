@@ -10,6 +10,7 @@ type UserProfile = {
   name: string | null;
   age: number | null;
   location: string | null;
+  email: string | null; // 이메일은 관리 목적으로만 사용 (사용자에게 표시하지 않음)
   created_at: string;
   updated_at: string;
 };
@@ -83,12 +84,22 @@ export function UserProfile() {
     setError(null);
 
     try {
+      const payload: {
+        name?: string | null;
+        age?: string | null;
+        location?: string | null;
+      } = {
+        name: formData.name || null,
+        age: formData.age || null,
+        location: formData.location || null,
+      };
+
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -199,6 +210,7 @@ export function UserProfile() {
               placeholder="거주지를 입력하세요"
             />
           </div>
+
 
           {error && (
             <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-200">
