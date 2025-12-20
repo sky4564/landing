@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
 
     try {
       const supabase = createClient();
-      
+
       // 비밀번호 재설정 이메일 전송
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
@@ -86,11 +86,10 @@ export default function ForgotPasswordPage() {
 
           {message && (
             <div
-              className={`rounded-lg border px-4 py-3 text-sm ${
-                message.type === "success"
+              className={`rounded-lg border px-4 py-3 text-sm ${message.type === "success"
                   ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-200"
                   : "bg-red-500/10 border-red-500/20 text-red-200"
-              }`}
+                }`}
             >
               {message.text}
             </div>

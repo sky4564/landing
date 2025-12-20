@@ -1,9 +1,14 @@
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
-import { BalanceCard } from "@/components/BalanceCard";
 import { LogoutButton } from "@/components/LogoutButton";
 import { UserProfile } from "@/components/UserProfile";
-import { Calendar } from "@/components/Calendar";
+import {
+  TransactionsProvider,
+  TransactionsList,
+  TransactionsForm,
+  TransactionsCalendar,
+  TransactionsBalanceCard,
+} from "@/components/TransactionsSection";
 
 // 동적 렌더링 강제 (서버 사이드 prerender 방지)
 export const dynamic = 'force-dynamic';
@@ -57,28 +62,32 @@ export default async function DashboardPage() {
           <LogoutButton />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-6">
-            <BalanceCard />
-            <Calendar />
-          </div>
-          <div className="space-y-6">
-            <UserProfile />
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-indigo-900/30 backdrop-blur">
-              <p className="text-sm font-semibold text-cyan-100">
-                다음 단계 · 은행 연결
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-slate-200">
-                <li>· 오픈뱅킹 인증 후 Access Token 저장</li>
-                <li>· 토큰 만료 시 Refresh 로직 추가</li>
-                <li>· 오픈뱅킹 API 연동하여 budgets 테이블 자동 업데이트</li>
-              </ul>
-              <p className="mt-3 text-xs text-slate-400">
-                현재는 budgets 테이블의 데이터를 표시합니다. 오픈뱅킹 연동 후 자동으로 업데이트됩니다.
-              </p>
+        <TransactionsProvider>
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-6">
+              <TransactionsBalanceCard />
+              <TransactionsList />
+              <TransactionsCalendar />
+            </div>
+            <div className="space-y-6">
+              <TransactionsForm />
+              <UserProfile />
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-indigo-900/30 backdrop-blur">
+                <p className="text-sm font-semibold text-cyan-100">
+                  다음 단계 · 은행 연결
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-slate-200">
+                  <li>· 오픈뱅킹 인증 후 Access Token 저장</li>
+                  <li>· 토큰 만료 시 Refresh 로직 추가</li>
+                  <li>· 오픈뱅킹 API 연동하여 budgets 테이블 자동 업데이트</li>
+                </ul>
+                <p className="mt-3 text-xs text-slate-400">
+                  현재는 budgets 테이블의 데이터를 표시합니다. 오픈뱅킹 연동 후 자동으로 업데이트됩니다.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </TransactionsProvider>
       </div>
     </div>
   );
