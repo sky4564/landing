@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTransactionStore } from "@/store/transactionStore";
 
 function formatCurrency(value: number) {
@@ -24,8 +24,15 @@ export function TransactionList() {
     fetchTransactions,
     deleteTransaction,
   } = useTransactionStore();
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
+    // 이미 fetch했으면 다시 호출하지 않음 (React Strict Mode 대응)
+    if (hasFetchedRef.current) {
+      return;
+    }
+    
+    hasFetchedRef.current = true;
     fetchTransactions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

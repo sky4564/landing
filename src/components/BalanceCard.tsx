@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTransactionStore } from "@/store/transactionStore";
 
 type BalanceResponse = {
@@ -22,6 +22,9 @@ export function BalanceCard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { transactions } = useTransactionStore();
+  const prevTransactionsLengthRef = useRef<number>(transactions.length);
+  const hasFetchedOnMountRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
 
   const fetchBalance = async () => {
     try {
@@ -41,13 +44,36 @@ export function BalanceCard() {
   };
 
   useEffect(() => {
+    // 이미 fetch했으면 다시 호출하지 않음 (React Strict Mode 대응)
+    if (hasFetchedOnMountRef.current) {
+      return;
+    }
+
+    hasFetchedOnMountRef.current = true;
     fetchBalance();
   }, []);
 
-  // transactions가 변경될 때마다 잔액 정보 새로고침
+  // transactions가 실제로 변경될 때만 잔액 정보 새로고침
   useEffect(() => {
-    fetchBalance();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const currentLength = transactions.length;
+    const prevLength = prevTransactionsLengthRef.current;
+
+    // 실제로 길이가 변경되었을 때만 fetchBalance 호출
+    if (currentLength !== prevLength) {
+      // 초기 로드 시 (0에서 증가하는 경우)는 스킵 (마운트 시 이미 fetchBalance 호출됨)
+      if (isInitialLoadRef.current && prevLength === 0 && currentLength > 0) {
+        prevTransactionsLengthRef.current = currentLength;
+        isInitialLoadRef.current = false;
+        return;
+      }
+
+      prevTransactionsLengthRef.current = currentLength;
+      isInitialLoadRef.current = false;
+      fetchBalance();
+    } else {
+      // 길이가 같아도 ref 업데이트 (다음 비교를 위해)
+      prevTransactionsLengthRef.current = currentLength;
+    }
   }, [transactions.length]);
 
   const balance = data?.balance ?? 0;

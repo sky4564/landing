@@ -39,7 +39,7 @@ interface TransactionStore {
   }) => Promise<void>;
 }
 
-export const useTransactionStore = create<TransactionStore>((set, get) => ({
+export const useTransactionStore = create<TransactionStore>((set) => ({
   // Initial state
   transactions: [],
   loading: false,
