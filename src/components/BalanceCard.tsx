@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTransactionStore } from "@/store/transactionStore";
 
 type BalanceResponse = {
   balance: number;
@@ -20,27 +21,34 @@ export function BalanceCard() {
   const [data, setData] = useState<BalanceResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { transactions } = useTransactionStore();
+
+  const fetchBalance = async () => {
+    try {
+      const res = await fetch("/api/balance");
+      if (!res.ok) {
+        throw new Error("잔액 정보를 불러오지 못했습니다.");
+      }
+      const json = (await res.json()) as BalanceResponse;
+      setData(json);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBalance = async () => {
-      try {
-        const res = await fetch("/api/balance");
-        if (!res.ok) {
-          throw new Error("잔액 정보를 불러오지 못했습니다.");
-        }
-        const json = (await res.json()) as BalanceResponse;
-        setData(json);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBalance();
   }, []);
+
+  // transactions가 변경될 때마다 잔액 정보 새로고침
+  useEffect(() => {
+    fetchBalance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions.length]);
 
   const balance = data?.balance ?? 0;
 

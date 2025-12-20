@@ -3,7 +3,8 @@ import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { BalanceCard } from "@/components/BalanceCard";
 import { LogoutButton } from "@/components/LogoutButton";
 import { UserProfile } from "@/components/UserProfile";
-import { Calendar } from "@/components/Calendar";
+import { CalendarWithTransactions } from "@/components/CalendarWithTransactions";
+import { TransactionsSection } from "@/components/TransactionsSection";
 
 // 동적 렌더링 강제 (서버 사이드 prerender 방지)
 export const dynamic = 'force-dynamic';
@@ -60,7 +61,8 @@ export default async function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
             <BalanceCard />
-            <Calendar />
+            <CalendarWithTransactions />
+            <TransactionsSection />
           </div>
           <div className="space-y-6">
             <UserProfile />
